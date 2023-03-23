@@ -1,0 +1,30 @@
+# With inspiration from: https://github.com/DanTup/dart-native-executables
+
+name: Multibuild
+
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        include:
+          - os: ubuntu-latest
+            output-name: showplatform-linux
+          - os: macOS-latest
+            output-name: showplatform-mac
+          - os: windows-latest
+            output-name: showplatform-windows.exe
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dart-lang/setup-dart@v1
+      - run: mkdir build
+      - run: dart compile exe bin/showplatform.dart -v -o build/${{ matrix.output-name }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: native-executables
+          path: build
