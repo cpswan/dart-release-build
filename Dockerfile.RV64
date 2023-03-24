@@ -3,6 +3,9 @@ FROM debian:unstable
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
+        apt-utils \
+    ; \
+    apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
         dnsutils \
