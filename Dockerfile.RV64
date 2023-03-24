@@ -1,4 +1,4 @@
-FROM debian:slim-unstable
+FROM debian:unstable-slim
 
 RUN set -eux; \
     apt-get update; \
