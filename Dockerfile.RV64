@@ -1,32 +1,32 @@
-FROM debian:unstable-slim
+FROM atsigncompany/buildimage:riscv AS buildimage
+ENV HOMEDIR=/atsign
+ENV BINARYDIR=${HOMEDIR}/at_activate
+ENV USER_ID=1024
+ENV GROUP_ID=1024
+WORKDIR ${HOMEDIR}
+# Context for this Dockerfile needs to be {at_libraries_repo}/packages/at_onboarding_cli
+# If building manually then (from packages/at_onboarding_cli):
+## docker build -t atsigncompany/at_activate .
+COPY . .
+RUN \
+  mkdir -p "$HOMEDIR" ; \
+  mkdir -p "$BINARYDIR" ; \
+  case "$(dpkg --print-architecture)" in \
+        amd64) \
+            ARCH="x64";; \
+        armhf) \
+            ARCH="arm";; \
+        arm64) \
+            ARCH="arm64";; \
+        riscv64) \
+            ARCH="riscv64";; \
+    esac; \
+  dart pub get ; \
+  dart pub upgrade ; \
+  dart compile exe bin/showplatform.dart -o "$BINARYDIR"/showplatform ; \
+  tar cvzf /atsign/showplatform-linux-"$ARCH".tgz "$BINARYDIR"/showplatform
 
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        dnsutils \
-        git \
-        openssh-client \
-        unzip \
-    ; \
-    rm -rf /var/lib/apt/lists/*
-
-ENV DART_SDK /usr/lib/dart
-ENV PATH $DART_SDK/bin:$PATH
-ENV DART_CHANNEL beta
-ENV DART_VERSION 3.0.0-290.3.beta
-ENV SDK_ARCH riscv64
-ENV DART_SHA256 013000bebf117608e9572336f227bffa1839d119753d084009331fc6e1747c9e
-
-WORKDIR /root
-RUN set -eux; \
-    SDK="dartsdk-linux-${SDK_ARCH}-release.zip"; \
-    BASEURL="https://storage.googleapis.com/dart-archive/channels"; \
-    URL="$BASEURL/$DART_CHANNEL/release/$DART_VERSION/sdk/$SDK"; \
-    echo "SDK: $URL" >> dart_setup.log ; \
-    curl -fLO "$URL"; \
-    echo "$DART_SHA256 *$SDK" \
-        | sha256sum --check --status --strict -; \
-    unzip "$SDK" && mv dart-sdk "$DART_SDK" && rm "$SDK" \
-        && chmod 755 "$DART_SDK" && chmod 755 "$DART_SDK/bin";
+  
+# Second stage of build FROM scratch
+FROM scratch AS export-stage
+COPY --from=buildimage /atsign/showplatform-linux-*.tgz .
