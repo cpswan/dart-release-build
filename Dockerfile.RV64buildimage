@@ -1,0 +1,32 @@
+FROM debian:unstable-slim
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        dnsutils \
+        git \
+        openssh-client \
+        unzip \
+    ; \
+    rm -rf /var/lib/apt/lists/*
+
+ENV DART_SDK /usr/lib/dart
+ENV PATH $DART_SDK/bin:$PATH
+ENV DART_CHANNEL beta
+ENV DART_VERSION 3.0.0-290.3.beta
+ENV SDK_ARCH riscv64
+ENV DART_SHA256 013000bebf117608e9572336f227bffa1839d119753d084009331fc6e1747c9e
+
+WORKDIR /root
+RUN set -eux; \
+    SDK="dartsdk-linux-${SDK_ARCH}-release.zip"; \
+    BASEURL="https://storage.googleapis.com/dart-archive/channels"; \
+    URL="$BASEURL/$DART_CHANNEL/release/$DART_VERSION/sdk/$SDK"; \
+    echo "SDK: $URL" >> dart_setup.log ; \
+    curl -fLO "$URL"; \
+    echo "$DART_SHA256 *$SDK" \
+        | sha256sum --check --status --strict -; \
+    unzip "$SDK" && mv dart-sdk "$DART_SDK" && rm "$SDK" \
+        && chmod 755 "$DART_SDK" && chmod 755 "$DART_SDK/bin";
