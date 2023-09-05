@@ -20,7 +20,7 @@ jobs:
             output-name: showplatform-windows.exe
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
       - run: mkdir build
       - run: dart compile exe bin/showplatform.dart -v -o build/${{ matrix.output-name }}
